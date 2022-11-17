@@ -8,7 +8,7 @@ import os
 CHARACTER_OFFICIAL_FILE = 'official_guess_who_characters.txt'
 CHARACTER_USER_FILE = 'guess_who_characters.txt'
 
-QUESTIONS = 5
+QUESTIONS = 20
 POINTS_PER_QUESTION = 1000
 POINTS_PER_TRAIT = 50
 POINTS_FOR_CORRECT_GUESS = 1500
@@ -116,6 +116,7 @@ def play_game(character_profile: list[str]) -> int:
                 record[count] += ' (✓)'
                 if character_profile == []:
                     print('You have guessed all my character\'s traits!')
+                    print_record(record)
                     endloop = True
                 else:
                     continue_game()

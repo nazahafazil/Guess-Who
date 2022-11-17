@@ -1,0 +1,289 @@
+# GUESS WHO: EXECUTIVE FILE
+
+import random
+import os
+
+#================================== CONSTANTS =================================#
+
+CHARACTER_OFFICIAL_FILE = 'official_guess_who_characters.txt'
+CHARACTER_USER_FILE = 'guess_who_characters.txt'
+
+QUESTIONS = 5
+POINTS_PER_QUESTION = 1000
+POINTS_PER_TRAIT = 50
+POINTS_FOR_CORRECT_GUESS = 1500
+
+YES = 'Y'
+NO = 'N'
+READY = 'READY'
+QUIT = 'QUIT'
+GUESS = 'G'
+QUESTION = 'Q'
+RECORD = 'R'
+CONTINUE = 'C'
+
+GAME_QUIT = -1
+
+#================================ FILE READING ================================#
+
+def read_file(filename: str) -> dict[str, list[str]]:
+    
+    file = open(filename)
+    file.readline()
+
+    characters_to_traits = {}
+    line = file.readline()
+
+    while line != '':
+        line = line.strip()
+        if line.isupper():
+            character = line
+            characters_to_traits[character] = []
+        elif line.islower():
+            characters_to_traits[character].append(line)
+        line = file.readline()
+    
+    file.close()
+    return characters_to_traits
+
+
+
+def create_user_file(filename: str) -> None:
+
+    file = open(filename)
+    file_copy = open(CHARACTER_USER_FILE, 'w')
+
+    copy = file.read()
+    file_copy.write(copy)
+
+    file.close()
+    file_copy.close()
+
+
+
+#================================== PRE-GAME ==================================#
+
+def show_rules() -> bool:
+
+    print('RULES:\n' +
+          ' > The computer will choose a character from ' +
+          CHARACTER_USER_FILE + '. Refer to this file as you play!\n' +
+          ' > During each round, you can choose from four options:\n' +
+          '   > Ask a question about the character.\n' + 
+          '   > Guess the character.\n' + 
+          '   > Show a record of all past guesses.\n' + 
+          '   > Quit the game.\n' + 
+          ' > You must guess the character within ' + str(QUESTIONS) +
+          ' rounds!\n' +
+          ' > You can only guess a character once. If you do not guess' +
+          ' the right character, you lose the game!\n' +
+          ' > Points will be tallied up at the end of the game.\n')
+
+
+
+def computer_choose_character(character_dict: dict[str, list[str]])\
+    -> dict[str, list[str]]:
+
+    characters = list(character_dict.keys())
+    return random.choice(characters)
+
+
+
+#================================== GAMEPLAY ==================================#
+
+def play_game(character_profile: list[str]) -> int:
+
+    count = 1
+    endloop = False
+    traits_guessed = []
+    record = {}
+
+    while count < QUESTIONS and not endloop:
+        print('\n' + '=' * 20 + ' Round ' + str(count) + ': ' + '=' * 20)
+        move = select_move()
+
+        if move.upper() == QUESTION:
+
+            trait_guess = guess_trait(traits_guessed).strip()
+            add_to_record(trait_guess, count, record)
+
+            trait_guessed = check_trait(trait_guess.strip(),
+                                        character_profile,
+                                        traits_guessed)
+            if trait_guessed:
+                print('Yes, my character does have ' + a_needed(trait_guess) +
+                      trait_guess + '!')
+                record[count] += ' (✓)'
+                if character_profile == []:
+                    print('You have guessed all my character\'s traits!')
+                    endloop = True
+                else:
+                    continue_game()
+            else:
+                print('No, my character does not have ' + 
+                      a_needed(trait_guess) + trait_guess + '!')
+                continue_game()
+
+            count += 1
+
+        elif move.upper() == GUESS:
+            endloop = True
+
+        elif move.upper() == RECORD:
+            print_record(record)
+            continue_game()
+
+        else:
+            print('You ended the game! You chicken...')
+            return GAME_QUIT
+
+    if count == QUESTIONS:
+        print('\n' + '=' * 20 + ' Round ' + str(count) + ': ' + '=' * 20 +
+              '\nThis is the final round - you must guess my character!')
+
+    return count
+
+
+
+def select_move() -> str:
+
+    print('Select your move!')
+    move = input('{' + QUESTION + '} -> Ask a question!\n' +
+                 '{' + GUESS + '} -> Guess a character!\n' +
+                 '{' + RECORD + '} -> Show your record of guesses!\n' +
+                 '{' + QUIT + '} -> Quit the game.\n')
+
+    while move.upper() not in (QUESTION, GUESS, QUIT, RECORD):
+        move = input('Please select a move!\n')
+
+    return move
+
+
+
+def guess_trait(traits_guessed: list[str]) -> str:
+
+    trait_guess = input('Question - Does this character have: ')
+
+    while not trait_guess.replace(' ', '').isalpha() :
+        trait_guess = input('Please enter a valid guess.\n' +
+                            'Does this character have: ')
+
+    while trait_guess in traits_guessed:
+        trait_guess = input('You have already guessed that! ' +
+                            'Guess something else.\n' +
+                            'Does this character have: ')        
+
+    return trait_guess
+
+
+
+def add_to_record(trait: str, count: int, record: dict[int, str]) -> None:
+
+    record[count] = trait
+
+
+
+def check_trait(trait: str, 
+                traits: list[str], 
+                traits_guessed: list[str]) -> bool:
+
+    if trait in traits:
+        traits.remove(trait)
+        traits_guessed.append(trait)
+        return True
+    return False
+
+
+
+def continue_game():
+    cont = input('Type ' + CONTINUE + ' to continue: ')
+    
+    while cont.upper() != CONTINUE :
+        cont = input('Please enter ' + CONTINUE + ' to proceed: ')
+
+
+
+def print_record(record: dict[int, str]) -> None:
+
+    print('========= GUESSES RECORD =========')
+
+    for key in record:
+        print (' > Round ' + str(key) + ': ' + record[key])
+
+    print('========= END OF RECORD ==========')
+
+
+
+def a_needed(trait_guess: str) -> str:
+    
+    if trait_guess.endswith('shirt') or\
+       (trait_guess in ('scarf', 'hat', 'necklace', 'bracelet', 
+                        'watch', 'scar')):
+        return 'a '
+
+    return ''
+
+
+
+#================================= POST-GAME ==================================#
+
+def guess_character(character: str,
+                    traits: list[str],
+                    questions_count: int) -> int:
+
+    points = 0
+    
+    character_guess = input('Guess my character: ')
+    while not character_guess.strip().isalpha():
+        character_guess = input('Please guess a valid character: ')
+
+    if character_guess.strip().upper() == character:
+        points = ((POINTS_PER_QUESTION * (QUESTIONS - questions_count)) +
+                  (POINTS_PER_TRAIT * len(traits)) +
+                  POINTS_FOR_CORRECT_GUESS)
+        print('You guessed correctly! My character is ' + character + '.')
+    else:
+        print('You guessed incorrectly! My character is ' + character +
+              '. Try again next time!')
+
+    return points
+
+
+
+#================================ THE PROGRAM =================================#
+
+if __name__ == '__main__':
+
+    print('#' * 100 + '\nWelcome to GUESS WHO!\n')
+
+    create_user_file(CHARACTER_OFFICIAL_FILE)
+    
+    show_rules()
+    
+    character_dict = read_file(CHARACTER_OFFICIAL_FILE)
+    
+    character = computer_choose_character(character_dict)
+    character_profile = character_dict[character]
+
+    print('The computer has chosen a character and is ready to play! ' + 
+          'Are you ready?')
+    
+    ready = input('Type ' + READY + ' to begin! ' +
+                  'Type ' + QUIT + ' to quit the game.\n')
+
+    while ready.upper() not in (READY, QUIT):
+        ready = input('Please type ' + READY + ' or ' + QUIT + ': ')
+    
+    if ready.upper() == READY:
+        count_questions = play_game(character_profile)
+        if count_questions != GAME_QUIT:
+            points = guess_character(character,
+                                     character_profile,
+                                     count_questions)
+            print(' > You scored ' + str(points) + ' points in this game. ' +
+                  'Thanks for playing!\n')
+    else:
+        print('You ended the game before it began. You chicken...\n')
+
+    print('Note: ' + CHARACTER_USER_FILE + ' has been deleted.\n' + '#' * 100)
+    os.remove(CHARACTER_USER_FILE)

@@ -1,0 +1,18 @@
+= GUESS WHO SAMPLE CHARACTER FILE =
+
+AUBREY
+brown hair
+glasses
+red shirt
+
+BRAD
+sunglasses
+khaki pants
+brown hair
+scar
+
+CHARLIE
+blue shirt
+brown hair
+hat
+glasses
